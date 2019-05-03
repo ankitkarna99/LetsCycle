@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class User extends Model
 {
-    public $dateFormat = 'U';
     protected $fillable = ['email','password','name','phone_number','address'];
     protected $hidden = ['password'];
 
@@ -15,6 +14,6 @@ class User extends Model
     }
 
     public function unpaidCycles(){
-        return $this->belongsToMany('App\Cycle')->withPivot(['paid','created_at','updated_at']);
+        return $this->belongsToMany('App\Cycle')->withTimestamps()->withPivot(['paid','created_at','updated_at']);
     }
 }
