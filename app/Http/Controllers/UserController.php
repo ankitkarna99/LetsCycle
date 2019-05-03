@@ -32,4 +32,28 @@ class UserController extends Controller
             ];
         }
     }
+
+    public function doRegistration(Request $request){
+        $this->validate($request, [
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:6',
+            'name' => 'required|min:3',
+            'phone_number' => 'required|min:9',
+            'address' => 'required|min:5',
+        ]);
+
+        $user = User::create($request->all());
+
+        $token = array(
+            "id" => $user->id,
+            "iat" => time(),
+        );
+
+        $jwt = JWT::encode($token, env("APP_KEY"));
+        
+        return [
+            "message" => "Registration successful.",
+            "token" => $jwt
+        ];
+    }
 }
