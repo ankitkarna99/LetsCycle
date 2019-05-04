@@ -47,15 +47,24 @@ class CycleController extends Controller
             ], 400);
         }
 
-        $user->pivot->touch();
-
         if ($user->id == Auth::user()->id){
+
+            $user->pivot->touch();
+
+            $user->pivot->billed = 1;
+
             $mins = ($user->pivot->updated_at->timestamp - $user->pivot->created_at->timestamp) / 60;
+                        
             $billAmount = round($mins * floatval(env('PPM')),2);
 
+            $user->pivot->bill_amount = $billAmount;
+
+            $user->pivot->save();
+            
             return [
                 "message" => "Your fare amount is Rs. $billAmount.",
-                "amount" => $billAmount
+                "amount" => $billAmount,
+                "cycle_id" => $id
             ];
         } else {
             return response([
@@ -63,40 +72,47 @@ class CycleController extends Controller
             ], 400);
         }
     }
-    // public function payForCycle($id, Request $request){
-    //     if ($request->input('master_password') == env('MASTER_PASSWORD')){
-    //         $cycle = Cycle::find($id);
 
-    //         $user = $cycle->users()->first();
+    public function payBill($id){
+        $cycle = Cycle::find($id);
 
-    //         if (!$user) {
-    //             return response([
-    //                 "message" => "This cycle is not appointed to anyone."
-    //             ], 400);
-    //         }
+        $user = $cycle->users()->first();
 
-    //         $user->pivot->touch();
+        if (!$user) {
+            return response([
+                "message" => "This cycle is not appointed to anyone."
+            ], 400);
+        }
 
-    //         if ($user->id == Auth::user()->id){
-    //             $mins = ($user->pivot->updated_at->timestamp - $user->pivot->created_at->timestamp) / 60;
-    //             $billAmount = round($mins * floatval(env('PPM')),2);
+        if ($user->id == Auth::user()->id) {
 
-    //             $user->pivot->paid = 1;
-    //             $user->pivot->save();
+            if ($user->pivot->billed == 0){
+                return response([
+                    "message" => "You have not been billed yet."
+                ], 400);
+            }
 
-    //             return [
-    //                 "message" => "Account was set to paid.",
-    //                 "amount" => $billAmount
-    //             ];
-    //         } else {
-    //             return response([
-    //                 "message" => "You are not appointed to this cycle."
-    //             ], 400);
-    //         }
-    //     } else {
-    //         return response([
-    //             "message" => "Master password did not match."
-    //         ], 400);
-    //     }
-    // }
+            if ($user->credit < $user->pivot->bill_amount){
+                return response([
+                    "message" => "You do not have sufficient credits."
+                ], 400);
+            }
+
+            $user->credit -= $user->pivot->bill_amount;
+            $user->save();
+
+            $user->pivot->paid = 1;
+            $user->pivot->save();
+
+            return [
+                "message" => "You have successfully paid Rs. ".$user->pivot->bill_amount." for your fare.",
+            ];
+        } else {
+            return response([
+                "message" => "You are not appointed to this cycle."
+            ], 400);
+        }
+    }
+    
+
 }
