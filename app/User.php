@@ -10,10 +10,10 @@ class User extends Model
     protected $hidden = ['password'];
 
     public function cycles(){
-        return $this->belongsToMany('App\Cycle')->withPivot(['paid', 'created_at', 'updated_at']);
+        return $this->belongsToMany('App\Cycle')->withTimestamps()->withPivot(['paid', 'created_at', 'updated_at']);
     }
 
     public function unpaidCycles(){
-        return $this->belongsToMany('App\Cycle')->withTimestamps()->withPivot(['paid','created_at','updated_at']);
+        return $this->belongsToMany('App\Cycle')->withTimestamps()->withPivot(['paid','created_at','updated_at'])->wherePivot('paid', 0);
     }
 }
