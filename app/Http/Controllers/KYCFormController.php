@@ -26,7 +26,7 @@ class KYCFormController extends Controller
 
     public function insertKYC(Request $request)
     {
-        $kyc = KYCForm::find(Auth::user()->id);
+        $kyc = KYCForm::where(['user_id' => Auth::user()->id]);
         if ($kyc) {
             return response([
                 "message" => "KYC form already filled."
@@ -53,6 +53,8 @@ class KYCFormController extends Controller
         }
 
         $inputs = $request->all();
+
+        $inputs['user_id'] = Auth::user()->id;
 
         $kyc = KYCForm::create($inputs);
 
